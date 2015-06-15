@@ -2,6 +2,7 @@ package com.liangzhi.core.api.resources;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
@@ -191,11 +192,13 @@ public class UsersResource {
 		// Encrypt both passwords
 		BasicPasswordEncryptor passwordEncryptor = new BasicPasswordEncryptor();
 		String encryptedBasicPassword = passwordEncryptor.encryptPassword(userCredz.getPassword());
+		UUID uuid = UUID.randomUUID();
+        String uuidNoDashes = uuid.toString().replace("-", "");
 		// Use DAO to create the user
 		User user = new User();
 		user.setEmail(userCredz.getEmail());
 		user.setPassword(encryptedBasicPassword);
-		user.setDeveloperToken(null);
+		user.setDeveloperToken(uuidNoDashes);
 	    userDao.insertUser(user);
 	    return user;
 	}

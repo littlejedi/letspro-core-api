@@ -19,7 +19,8 @@ import com.sun.jersey.api.client.WebResource;
 public class UsersResourceTest extends BaseResourceTest  {
 
 	private String testEmail;
-	private Integer testUserId = 1;
+	private Integer testUserId;
+	private String testDeveloperToken;
 
 	public UsersResourceTest() throws Exception {
 		super();
@@ -52,6 +53,7 @@ public class UsersResourceTest extends BaseResourceTest  {
 		Assert.assertNotNull(newUser.getId());
 		testUserId = newUser.getId();
 		testEmail = newUser.getEmail();
+		testDeveloperToken = newUser.getDeveloperToken();
 	}
 	
 	public void testInsertUser() {
@@ -62,6 +64,7 @@ public class UsersResourceTest extends BaseResourceTest  {
 		User user = new User();
 		user.setPassword("test123");
 		user.setEmail(uuidNoDashes + "@test.com");
+		user.setDeveloperToken(uuidNoDashes);
 
 		ClientResponse response = webResource.type(MediaType.APPLICATION_JSON)
 				.post(ClientResponse.class, user);
@@ -81,6 +84,7 @@ public class UsersResourceTest extends BaseResourceTest  {
 		Assert.assertEquals(Response.SC_OK, response.getStatus());
 		User user = response.getEntity(User.class);
 		Assert.assertEquals(testEmail, user.getEmail());
+		Assert.assertEquals(testDeveloperToken, user.getDeveloperToken());
 	}
 	
 	public void testLogin() {

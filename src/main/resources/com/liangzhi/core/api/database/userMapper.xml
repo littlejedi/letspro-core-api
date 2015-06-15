@@ -7,6 +7,7 @@
 		<result column="UserID" property="id" />
 		<result column="UserEmail" property="email" />
 		<result column="UserPassword" property="password"/>
+		<result column="UserDeveloperToken" property="developerToken"/>
 		<result column="UserCreated" property="created" />
 		<result column="UserUpdated" property="updated" />
 		<result column="UserLastLogin" property="lastLogin" />
