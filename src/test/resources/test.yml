@@ -1,0 +1,66 @@
+# use the simple server factory if you only want to run on a single port
+#server:
+#  type: simple
+#  connector:
+#    type: http
+#    port: 8080
+
+server:
+#  softNofileLimit: 1000
+#  hardNofileLimit: 1000
+  applicationConnectors:
+    - type: http
+      port: 8181
+    - type: https
+      port: 8641
+      keyStorePath: example.keystore
+      keyStorePassword: example
+      validateCerts: false
+# this requires the npn-boot library on the JVM's boot classpath
+#    - type: spdy3
+#      port: 8642
+#      keyStorePath: example.keystore
+#      keyStorePassword: example
+#      validateCerts: false
+  adminConnectors:
+    - type: http
+      port: 8681
+    - type: https
+      port: 8644
+      keyStorePath: example.keystore
+      keyStorePassword: example
+      validateCerts: false
+
+# Logging settings.
+logging:
+
+  # The default level of all loggers. Can be OFF, ERROR, WARN, INFO, DEBUG, TRACE, or ALL.
+  level: INFO
+
+  # Logger-specific levels.
+  loggers:
+  
+    org.eclipse.jetty: INFO
+
+    # Sets the level for 'com.example.app' to DEBUG.
+    com.example.app: DEBUG
+    
+    com.liangzhi.core.api.database: ALL
+    
+    org.apache.ibatis: DEBUG
+
+    org.hibernate.SQL: ALL
+
+  appenders:
+    - type: console
+    
+config:
+
+  # env
+  env: dev
+
+  # The hello message to display at http://localhost:9898/hello
+  message: Welcome to the hello application !!!
+  
+  # service base url
+  baseUrl: http://localhost:8080/

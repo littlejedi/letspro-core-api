@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.liangzhi.core.api.database.mapper.UserMapper">
+	<resultMap type="com.liangzhi.commons.domain.platform.User" id="userMap">
+		<result column="UserID" property="id" />
+		<result column="UserEmail" property="email" />
+		<result column="UserPassword" property="password"/>
+		<result column="UserCreated" property="created" />
+		<result column="UserUpdated" property="updated" />
+		<result column="UserLastLogin" property="lastLogin" />
+		<result column="UserLastLogout" property="lastLogout" />
+	</resultMap>
+	
+	<!--  <resultMap type="com.liangzhi.commons.domain.UserRoles" id="userRolesMap">
+	    <collection property="roles" ofType="com.liangzhi.commons.domain.Role">
+		  <result property="Role" column="UserRoleMappingRoleID"/>
+		</collection>
+	</resultMap> -->
+		
+	<select id="getUserRolesByUserId" parameterType="java.lang.Integer" resultType="com.liangzhi.commons.domain.Role">
+		SELECT UserRoleMappingRoleID
+		FROM userrolemapping
+		WHERE UserRoleMappingUserID = #{userId}
+	</select>
+	
+    <select id="findUsers" resultType="java.lang.String">
+        SELECT UserID
+	    FROM users
+	    LIMIT
+	    #{start}, #{end}
+    </select>
+    
+    <select id="findUsersFullEntity" resultMap="userMap">
+        SELECT *
+	    FROM users
+	    LIMIT
+	    #{start}, #{end}
+    </select>
+    
+    <select id="findUsersCount" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+	    FROM users
+    </select>
+
+	<select id="getUserByEmail" resultMap="userMap">
+		SELECT *, group_concat(distinct UserRoleMappingRoleID order by UserRoleMappingRoleID) as UserRoles FROM users
+		LEFT OUTER JOIN userrolemapping ON UserRoleMappingUserID = UserID
+		WHERE UserEmail = #{email}
+		GROUP BY UserID
+	</select>
+	
+	<select id="getUserByUserId" resultMap="userMap">
+		SELECT *, group_concat(distinct UserRoleMappingRoleID order by UserRoleMappingRoleID) as UserRoles FROM users
+		LEFT OUTER JOIN userrolemapping ON UserRoleMappingUserID = UserID
+		WHERE UserID = #{userId}
+		GROUP BY UserID
+	</select>
+
+	<update id="updateLastLoginDate">
+	   UPDATE users SET
+	     UserLastLogin = NOW()
+	   WHERE UserEmail = #{email}
+	</update>
+	
+	<update id="updateLastLogoutDate">
+	   UPDATE users SET
+	     UserLastLogout = NOW()
+	   WHERE UserEmail = #{email}
+	</update>
+	
+	<update id="update">
+	    UPDATE users SET      
+	      UserEmail = #{user.email},
+	      UserPassword = #{user.password},
+	      UserDeveloperToken = #{user.developerToken},
+	      UserUpdated = NOW()
+	    WHERE UserID = #{user.id}
+	</update>
+
+	<insert id="insert" useGeneratedKeys="true" keyProperty="user.id">
+		INSERT INTO users 
+		(
+		UserEmail,
+		UserPassword,
+		UserDeveloperToken,
+		UserCreated)
+		values
+		(
+		#{user.email},
+		#{user.password},
+		#{user.developerToken},
+		NOW())
+	</insert>
+
+	<delete id="deleteUserByEmail">
+		DELETE FROM users WHERE UserEmail = #{email}
+	</delete>
+	
+	<delete id="clearRoles">
+		DELETE FROM userrolemapping WHERE UserRoleMappingUserID = #{userId}
+	</delete>
+	
+	<insert id="updateUserRoles">
+	    INSERT INTO userrolemapping (UserRoleMappingUserID, UserRoleMappingRoleID) VALUES 
+	    (#{userId}, #{role})
+	</insert>
+	
+	<insert id="insertUserRoles">
+	    INSERT INTO userrolemapping (UserRoleMappingUserID, UserRoleMappingRoleID) VALUES 
+	    <foreach item="role" index="index" collection="roles" separator=",">
+	        (#{userId},#{role.value})
+	    </foreach>
+	</insert>
+</mapper>

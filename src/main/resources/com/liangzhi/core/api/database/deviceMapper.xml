@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.liangzhi.core.api.database.mapper.DeviceMapper">
+	<resultMap type="com.liangzhi.commons.domain.platform.Device" id="deviceMap">
+		<result column="DeviceID" property="id"/>
+		<result column="DeviceName" property="name"/>
+		<result column="DeviceDescription" property="description"/>
+		<result column="DeviceLatitude" property="latitude"/>
+		<result column="DeviceLongtitude" property="longtitude"/>
+		<result column="DeviceCreated" property="created"/>
+		<result column="DeviceUpdated" property="updated"/>
+		<collection ofType="com.liangzhi.commons.domain.platform.Sensor" property="sensors">
+		  <result column="SensorID" property="id"></result>
+		  <result column="SensorName" property="name"></result>
+		  <result column="SensorTypeID" property="type"></result>
+		  <result column="SensorDescription" property="description"></result>
+		  <result column="SensorCreated" property="created"></result>
+		  <result column="SensorUpdated" property="updated"></result>
+		</collection>
+	</resultMap>
+	
+	<resultMap type="com.liangzhi.commons.domain.platform.Sensor" id="sensorMap">
+		<result column="SensorID" property="id"></result>
+		<result column="SensorName" property="name"></result>
+		<result column="SensorTypeID" property="type"></result>
+		<result column="SensorDescription" property="description"></result>
+		<result column="SensorCreated" property="created"></result>
+		<result column="SensorUpdated" property="updated"></result>
+		<association javaType="com.liangzhi.commons.domain.platform.Device" property="device">
+          <result column="DeviceID" property="id"/>
+		  <result column="DeviceName" property="name"/>
+		  <result column="DeviceDescription" property="description"/>
+		  <result column="DeviceLatitude" property="latitude"/>
+		  <result column="DeviceLongtitude" property="longtitude"/>
+		  <result column="DeviceCreated" property="created"/>
+		  <result column="DeviceUpdated" property="updated"/>
+		</association>
+	</resultMap>
+	
+	<select id="getDeviceById" resultMap="deviceMap">
+      SELECT * FROM devices d
+      LEFT OUTER JOIN sensors s ON d.DeviceID = s.SensorDeviceID
+      WHERE d.DeviceID = #{deviceId}
+	</select>
+	
+	<insert id="insertDevice" useGeneratedKeys="true" keyProperty="device.id">
+	  INSERT INTO devices (DeviceDescription, DeviceName, DeviceCreated, DeviceUpdated, DeviceLatitude, DeviceLongtitude) VALUES (#{device.description}, #{device.name}, NOW(), NULL, #{device.latitude}, #{device.longtitude});
+	</insert>
+	
+	<update id="updateDeviceById">
+      UPDATE devices SET DeviceDescription=#{device.description}, DeviceName=#{device.name}, DeviceUpdated=NOW(), DeviceLatitude=#{device.latitude}, DeviceLongtitude=#{device.longtitude} WHERE DeviceID=#{device.id};
+	</update>
+	
+	<delete id ="deleteDeviceById">
+	  DELETE FROM devices
+	  where DeviceID = #{deviceId}
+	</delete>
+	
+	<select id="getSensorById" resultMap="sensorMap">
+      SELECT * FROM devices d
+      LEFT OUTER JOIN sensors s ON d.DeviceID = s.SensorDeviceID
+      WHERE s.SensorID = #{sensorId}
+	</select>
+	
+	<insert id="insertSensor" useGeneratedKeys="true" keyProperty="sensor.id">
+	  INSERT sensors (SensorName, SensorDescription, SensorDeviceID, SensorTypeID, SensorCreated) VALUES (#{sensor.name}, #{sensor.description}, #{sensor.deviceId}, #{sensor.type}, NOW());
+	</insert>
+	
+	<update id="updateSensorById">
+	  UPDATE sensors SET SensorName=#{sensor.name}, SensorDescription=#{sensor.description}, SensorTypeID=#{sensor.type}, SensorUpdated=NOW(), SensorDeviceId=#{sensor.deviceId} WHERE SensorID=#{sensor.id};
+	</update>
+	
+	<delete id ="deleteSensorById">
+      DELETE FROM sensors
+      WHERE SensorID = #{sensorId}
+	</delete>
+</mapper>
