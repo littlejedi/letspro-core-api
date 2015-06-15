@@ -5,7 +5,6 @@ import java.util.List;
 
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -27,27 +26,15 @@ import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Optional;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.liangzhi.commons.api.CoreApiPath;
-import com.liangzhi.commons.domain.CourseComment;
-import com.liangzhi.commons.domain.CourseFavoriteMapping;
-import com.liangzhi.commons.domain.CourseFavoriteMappings;
-import com.liangzhi.commons.domain.CourseLikeMapping;
-import com.liangzhi.commons.domain.CourseLikeMappings;
-import com.liangzhi.commons.domain.GoldTransaction;
-import com.liangzhi.commons.domain.GoldTransactionHistory;
-import com.liangzhi.commons.domain.GoldTransactionType;
-import com.liangzhi.commons.domain.UserEducationHistory;
-import com.liangzhi.commons.domain.UserEducationHistoryRecord;
 import com.liangzhi.commons.domain.Link;
 import com.liangzhi.commons.domain.Paginator;
-import com.liangzhi.commons.domain.platform.User;
-import com.liangzhi.commons.domain.UserCredentials;
-import com.liangzhi.commons.domain.UserRegistration;
 import com.liangzhi.commons.domain.UserRoles;
-import com.liangzhi.core.api.config.SpringConfiguration;
+import com.liangzhi.commons.domain.platform.User;
+import com.liangzhi.commons.domain.platform.UserCredz;
 import com.liangzhi.core.api.Constants;
+import com.liangzhi.core.api.config.SpringConfiguration;
 import com.liangzhi.core.api.database.dao.UserDao;
 import com.liangzhi.core.api.utils.PaginatorUtils;
 
@@ -161,15 +148,15 @@ public class UsersResource {
 	@Path("/login")
 	@POST
 	@Timed
-	public User doLogin(@Valid UserCredentials credz) {
-		Optional<User> user = Optional.fromNullable(userDao.getUserByEmail(credz.getUsername()));
+	public User doLogin(@Valid UserCredz credz) {
+		Optional<User> user = Optional.fromNullable(userDao.getUserByEmail(credz.getEmail()));
 		if (user.isPresent()) {
 			BasicPasswordEncryptor passwordEncryptor = new BasicPasswordEncryptor();
 			// get the digest for this user
 			String encryptedPassword = user.get().getPassword();
 			if (passwordEncryptor.checkPassword(credz.getPassword(), encryptedPassword)) {
 				// we have verified the credz are correct, update the timestamp and return this user
-				userDao.updateLastLoginDate(credz.getUsername());
+				userDao.updateLastLoginDate(credz.getEmail());
 				return user.get();
 			} else {
 				// bad login!
@@ -198,15 +185,15 @@ public class UsersResource {
 	@Path("/register")
 	@POST
 	@Timed
-	public User doRegister(@Valid UserRegistration userRegistration) {
-		LOGGER.info("Registering UserRegistration={}", userRegistration.toString());
+	public User doRegister(@Valid UserCredz userCredz) {
+		LOGGER.info("Registering UserRegistration={}", userCredz.toString());
 		// User should be already validated by annotation
 		// Encrypt both passwords
 		BasicPasswordEncryptor passwordEncryptor = new BasicPasswordEncryptor();
-		String encryptedBasicPassword = passwordEncryptor.encryptPassword(userRegistration.getBasicPassword());
+		String encryptedBasicPassword = passwordEncryptor.encryptPassword(userCredz.getPassword());
 		// Use DAO to create the user
 		User user = new User();
-		user.setEmail(userRegistration.getEmail());
+		user.setEmail(userCredz.getEmail());
 		user.setPassword(encryptedBasicPassword);
 		user.setDeveloperToken(null);
 	    userDao.insertUser(user);
