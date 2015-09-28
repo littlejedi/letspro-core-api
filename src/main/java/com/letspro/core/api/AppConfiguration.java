@@ -1,21 +1,21 @@
 package com.letspro.core.api;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.collect.ImmutableMap;
-import com.letspro.core.api.core.Template;
-
 import io.dropwizard.Configuration;
 import io.dropwizard.db.DataSourceFactory;
-
-import org.hibernate.validator.constraints.NotEmpty;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 
 import java.util.Collections;
 import java.util.Map;
 
-public class HelloWorldConfiguration extends Configuration {
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+
+import org.hibernate.validator.constraints.NotEmpty;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.collect.ImmutableMap;
+
+public class AppConfiguration extends Configuration {
+    
     @NotEmpty
     private String template;
 
@@ -47,10 +47,6 @@ public class HelloWorldConfiguration extends Configuration {
     @JsonProperty
     public void setDefaultName(String defaultName) {
         this.defaultName = defaultName;
-    }
-
-    public Template buildTemplate() {
-        return new Template(template, defaultName);
     }
 
     @JsonProperty("database")

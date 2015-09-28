@@ -1,7 +1,5 @@
 package com.letspro.core.api.resources;
 
-import com.letspro.core.api.core.User;
-
 import io.dropwizard.auth.Auth;
 
 import javax.annotation.security.PermitAll;
@@ -11,20 +9,22 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import com.letspro.core.api.auth.SimplePrincipal;
+
 @Path("/protected")
 @Produces(MediaType.TEXT_PLAIN)
 public class ProtectedResource {
 
     @PermitAll
     @GET
-    public String showSecret(@Auth User user) {
-        return String.format("Hey there, %s. You know the secret! %d", user.getName(), user.getId());
+    public String showSecret(@Auth SimplePrincipal principal) {
+        return String.format("Hey there, %s. You know the secret!", principal.getName());
     }
 
     @RolesAllowed("ADMIN")
     @GET
     @Path("admin")
-    public String showAdminSecret(@Auth User user) {
-        return String.format("Hey there, %s. It looks like you are an admin. %d", user.getName(), user.getId());
+    public String showAdminSecret(@Auth SimplePrincipal principal) {
+        return String.format("Hey there, %s. It looks like you are an admin", principal.getName());
     }
 }
