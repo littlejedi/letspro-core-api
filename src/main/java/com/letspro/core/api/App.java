@@ -12,7 +12,9 @@ import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 
 import com.letspro.core.api.auth.SimpleAuthenticator;
 import com.letspro.core.api.auth.SimplePrincipal;
+import com.letspro.core.api.db.MongoDatastore;
 import com.letspro.core.api.filter.DateRequiredFeature;
+import com.letspro.core.api.health.MongoDatabaseHealthCheck;
 import com.letspro.core.api.resources.FilteredResource;
 import com.letspro.core.api.resources.ProtectedResource;
 
@@ -39,7 +41,13 @@ public class App extends Application<AppConfiguration> {
 
     @Override
     public void run(AppConfiguration configuration, Environment environment) {
+        // Initialize db
+        MongoDatastore.getInstance().initialize(configuration.getMongoConfiguration());
         
+        // Health checks
+        environment.healthChecks().register("database", new MongoDatabaseHealthCheck());
+        
+        // Jersey
         environment.jersey().register(DateRequiredFeature.class);
         environment.jersey().register(new AuthDynamicFeature(new BasicCredentialAuthFilter.Builder<SimplePrincipal>()
                 .setAuthenticator(new SimpleAuthenticator())
