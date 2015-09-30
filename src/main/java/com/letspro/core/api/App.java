@@ -12,11 +12,13 @@ import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 
 import com.letspro.core.api.auth.SimpleAuthenticator;
 import com.letspro.core.api.auth.SimplePrincipal;
+import com.letspro.core.api.dao.SchoolsDao;
 import com.letspro.core.api.db.MongoDatastore;
 import com.letspro.core.api.filter.DateRequiredFeature;
 import com.letspro.core.api.health.MongoDatabaseHealthCheck;
 import com.letspro.core.api.resources.FilteredResource;
 import com.letspro.core.api.resources.ProtectedResource;
+import com.letspro.core.api.resources.SchoolsResource;
 
 public class App extends Application<AppConfiguration> {
     public static void main(String[] args) throws Exception {
@@ -44,6 +46,9 @@ public class App extends Application<AppConfiguration> {
         // Initialize db
         MongoDatastore.getInstance().initialize(configuration.getMongoConfiguration());
         
+        // Initialize DAOs
+        SchoolsDao schoolsDao = new SchoolsDao();
+        
         // Health checks
         environment.healthChecks().register("database", new MongoDatabaseHealthCheck());
         
@@ -58,5 +63,6 @@ public class App extends Application<AppConfiguration> {
         environment.jersey().register(RolesAllowedDynamicFeature.class);
         environment.jersey().register(new ProtectedResource());
         environment.jersey().register(new FilteredResource());
+        environment.jersey().register(new SchoolsResource(schoolsDao));
     }
 }
