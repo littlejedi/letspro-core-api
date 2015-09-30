@@ -16,7 +16,7 @@ import com.letspro.core.api.auth.SimplePrincipal;
 import com.letspro.core.api.dao.SchoolsDao;
 
 @Path("/schools")
-@Produces(MediaType.APPLICATION_JSON)
+@Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
 public class SchoolsResource {
     
     private SchoolsDao schoolsDao;
