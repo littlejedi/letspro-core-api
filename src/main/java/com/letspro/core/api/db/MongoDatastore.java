@@ -26,6 +26,7 @@ public class MongoDatastore {
     
     public void initialize(MongoConfiguration configuration)
     {
+        morphia.mapPackage("com.letspro.commons.domain.mongodb");
         String host = configuration.getHost();
         int port = configuration.getPort();
         String db = configuration.getDb();
