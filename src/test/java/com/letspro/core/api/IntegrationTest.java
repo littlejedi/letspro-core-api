@@ -1,39 +1,35 @@
-package com.example.helloworld;
+package com.letspro.core.api;
 
-import io.dropwizard.testing.ConfigOverride;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import io.dropwizard.testing.ResourceHelpers;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 
-import java.io.File;
-import java.io.IOException;
+import java.util.UUID;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.MediaType;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Test;
 
-import com.letspro.core.api.App;
-import com.letspro.core.api.AppConfiguration;
+import com.letspro.commons.domain.mongodb.School;
 
 public class IntegrationTest {
 
-    private static final String TMP_FILE = createTempFile();
-    private static final String CONFIG_PATH = ResourceHelpers.resourceFilePath("test-example.yml");
-
+    private static final String CONFIG_PATH = ResourceHelpers.resourceFilePath("test.yml");
+    
+    private static final String API_ADDRESS = "http://localhost:8080";
+    
     @ClassRule
     public static final DropwizardAppRule<AppConfiguration> RULE = new DropwizardAppRule<>(
-            App.class, CONFIG_PATH,
-            ConfigOverride.config("database.url", "jdbc:h2:" + TMP_FILE));
+            App.class, CONFIG_PATH);
 
     private Client client;
-
-    @BeforeClass
-    public static void migrateDb() throws Exception {
-        RULE.getApplication().run("db", "migrate", CONFIG_PATH);
-    }
 
     @Before
     public void setUp() throws Exception {
@@ -44,13 +40,18 @@ public class IntegrationTest {
     public void tearDown() throws Exception {
         client.close();
     }
-
-    private static String createTempFile() {
-        try {
-            return File.createTempFile("test-example", null).getAbsolutePath();
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        }
+    
+    @Test
+    public void testPostSchool() throws Exception {
+        UUID uuid = UUID.randomUUID();
+        String uuidString = uuid.toString();
+        final School school = new School("integrationtest-" + uuidString);
+        final School newSchool = client.target(API_ADDRESS + "/schools")
+                .request()
+                .post(Entity.entity(school, MediaType.APPLICATION_JSON_TYPE))
+                .readEntity(School.class);
+        assertNotNull(newSchool.getId());
+        assertEquals(newSchool.getName(), school.getName());
     }
 
     /*@Test
