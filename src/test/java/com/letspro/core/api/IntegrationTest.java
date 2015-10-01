@@ -30,7 +30,7 @@ public class IntegrationTest {
     
     private static final String API_ADDRESS = "http://localhost:8080";
     
-    private static final String TEST_SCHOOL_ID = "560cda5ff2763b2a94e052e6";
+    private static final String TEST_SCHOOL_ID = "560da8d7f2763b21d8243d5b";
     
     @ClassRule
     public static final DropwizardAppRule<AppConfiguration> RULE = new DropwizardAppRule<>(
@@ -68,6 +68,7 @@ public class IntegrationTest {
         final School school = client.target(API_ADDRESS + "/schools/" + TEST_SCHOOL_ID)
                 .request()
                 .get(School.class);
+        assertNotNull(school);
         final String currentName = school.getName();
         final String newName = "integrationtest-" + UUID.randomUUID().toString();
         school.setName(newName);

@@ -52,6 +52,10 @@ public class App extends Application<AppConfiguration> {
         // Health checks
         environment.healthChecks().register("database", new MongoDatabaseHealthCheck());
         
+        // Jackson
+        environment.getObjectMapper().disable(
+                com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        
         // Jersey
         environment.jersey().register(DateRequiredFeature.class);
         environment.jersey().register(new AuthDynamicFeature(new BasicCredentialAuthFilter.Builder<SimplePrincipal>()
