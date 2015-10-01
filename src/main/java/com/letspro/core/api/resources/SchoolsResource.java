@@ -6,6 +6,7 @@ import java.util.List;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -13,7 +14,6 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status;
 
-import org.apache.commons.lang3.StringUtils;
 import org.assertj.core.util.Strings;
 
 import com.codahale.metrics.annotation.Timed;
@@ -52,6 +52,16 @@ public class SchoolsResource {
             throw new WebApplicationException(Status.BAD_REQUEST);
         }
         schoolsDao.insertSchool(school);
+        return school;
+    }
+    
+    @Timed
+    @PUT    
+    public School updateSchool(@Auth SimplePrincipal principal, School school) {
+        if (school.getId() == null || Strings.isNullOrEmpty(school.getName())) {
+            throw new WebApplicationException(Status.BAD_REQUEST);
+        }
+        schoolsDao.updateSchool(school);
         return school;
     }
    

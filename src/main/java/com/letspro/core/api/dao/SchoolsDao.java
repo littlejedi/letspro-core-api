@@ -16,6 +16,12 @@ public class SchoolsDao extends EntityDao {
         return school;
     }
     
+    public School updateSchool(School school) {
+        Datastore datastore = getCoreDatastore();
+        datastore.save(school);
+        return school;
+    }
+    
     public School getSchool(String id)
     {
         Datastore datastore = getCoreDatastore();

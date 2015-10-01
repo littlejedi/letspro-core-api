@@ -12,6 +12,7 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 
+import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -23,6 +24,8 @@ public class IntegrationTest {
 
     private static final String CONFIG_PATH = ResourceHelpers.resourceFilePath("test.yml");
     
+    private static final String PASS = "coreapi!123";
+    
     private static final String API_ADDRESS = "http://localhost:8080";
     
     @ClassRule
@@ -33,7 +36,11 @@ public class IntegrationTest {
 
     @Before
     public void setUp() throws Exception {
+        HttpAuthenticationFeature feature = HttpAuthenticationFeature.universalBuilder()
+                .credentialsForBasic("user", PASS)
+                .build();
         client = ClientBuilder.newClient();
+        client.register(feature);
     }
 
     @After
