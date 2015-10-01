@@ -2,6 +2,7 @@ package com.letspro.core.api;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import io.dropwizard.testing.ResourceHelpers;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 
@@ -12,6 +13,7 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 
+import org.bson.types.ObjectId;
 import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
 import org.junit.After;
 import org.junit.Before;
@@ -28,6 +30,8 @@ public class IntegrationTest {
     
     private static final String API_ADDRESS = "http://localhost:8080";
     
+    private static final String TEST_SCHOOL_ID = "560cda5ff2763b2a94e052e6";
+    
     @ClassRule
     public static final DropwizardAppRule<AppConfiguration> RULE = new DropwizardAppRule<>(
             App.class, CONFIG_PATH);
@@ -36,9 +40,7 @@ public class IntegrationTest {
 
     @Before
     public void setUp() throws Exception {
-        HttpAuthenticationFeature feature = HttpAuthenticationFeature.universalBuilder()
-                .credentialsForBasic("user", PASS)
-                .build();
+        HttpAuthenticationFeature feature = HttpAuthenticationFeature.basic("user", PASS);
         client = ClientBuilder.newClient();
         client.register(feature);
     }
@@ -59,6 +61,23 @@ public class IntegrationTest {
                 .readEntity(School.class);
         assertNotNull(newSchool.getId());
         assertEquals(newSchool.getName(), school.getName());
+    }
+    
+    @Test
+    public void testUpdateSchool() throws Exception {
+        final School school = client.target(API_ADDRESS + "/schools/" + TEST_SCHOOL_ID)
+                .request()
+                .get(School.class);
+        final String currentName = school.getName();
+        final String newName = "integrationtest-" + UUID.randomUUID().toString();
+        school.setName(newName);
+        final School newSchool = client.target(API_ADDRESS + "/schools")
+                .request()
+                .put(Entity.entity(school, MediaType.APPLICATION_JSON_TYPE))
+                .readEntity(School.class);
+        assertTrue(newSchool.getName() != currentName);
+        assertEquals(newSchool.getId(), new ObjectId(TEST_SCHOOL_ID));
+        assertEquals(newSchool.getName(), newName);
     }
 
     /*@Test
