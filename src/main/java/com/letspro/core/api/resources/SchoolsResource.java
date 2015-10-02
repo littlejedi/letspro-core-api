@@ -4,6 +4,7 @@ import io.dropwizard.auth.Auth;
 
 import java.util.List;
 
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -36,13 +37,21 @@ public class SchoolsResource {
     @Path("/{id}")
     public School getSchool(@Auth SimplePrincipal principal, @PathParam("id") String id) 
     {
-        return schoolsDao.getSchool(id);
+        try {
+            return schoolsDao.getSchool(id);
+        } catch (Exception e) {
+            throw new WebApplicationException(e);
+        }
     }
     
     @Timed
     @GET
     public List<School> getSchools(@Auth SimplePrincipal principal) {
-        return schoolsDao.getSchools();
+        try {
+            return schoolsDao.getSchools();
+        } catch (Exception e) {
+            throw new WebApplicationException(e);
+        }      
     }
     
     @Timed
@@ -51,8 +60,11 @@ public class SchoolsResource {
         if (Strings.isNullOrEmpty(school.getName())) {
             throw new WebApplicationException(Status.BAD_REQUEST);
         }
-        schoolsDao.insertSchool(school);
-        return school;
+        try {
+            return schoolsDao.insertSchool(school);
+        } catch (Exception e) {
+            throw new WebApplicationException(e);
+        }
     }
     
     @Timed
@@ -61,9 +73,21 @@ public class SchoolsResource {
         if (school.getId() == null || Strings.isNullOrEmpty(school.getName())) {
             throw new WebApplicationException(Status.BAD_REQUEST);
         }
-        schoolsDao.updateSchool(school);
-        return school;
+        try {
+            return schoolsDao.updateSchool(school);
+        } catch (Exception e) {
+            throw new WebApplicationException(e);
+        }
     }
-   
-
+    
+    @Timed
+    @DELETE
+    @Path("/{id}")
+    public void deleteSchool(@Auth SimplePrincipal principal, @PathParam("id") String id) {
+        try {
+            schoolsDao.deleteSchool(id);
+        } catch (Exception e) {
+            throw new WebApplicationException(e);
+        }
+    }
 }

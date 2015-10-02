@@ -25,6 +25,11 @@ public class SchoolsDao extends EntityDao {
         return school;
     }
     
+    public void deleteSchool(String id) {
+        Datastore datastore = getCoreDatastore();
+        datastore.delete(School.class, new ObjectId(id));
+    }
+    
     public School getSchool(String id)
     {
         Datastore datastore = getCoreDatastore();

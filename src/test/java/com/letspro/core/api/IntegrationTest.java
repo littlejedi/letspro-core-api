@@ -12,6 +12,7 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 import org.bson.types.ObjectId;
 import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
@@ -61,6 +62,11 @@ public class IntegrationTest {
                 .readEntity(School.class);
         assertNotNull(newSchool.getId());
         assertEquals(newSchool.getName(), school.getName());
+        // Delete test entity
+        Response response = client.target(API_ADDRESS + "/schools" + "/" + newSchool.getId().toString())
+        .request()
+        .delete();
+        assertEquals(Response.Status.NO_CONTENT.getStatusCode(), response.getStatus());
     }
     
     @Test
