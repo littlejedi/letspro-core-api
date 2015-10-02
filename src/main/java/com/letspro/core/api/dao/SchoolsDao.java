@@ -33,8 +33,7 @@ public class SchoolsDao extends EntityDao {
     public School getSchool(String id)
     {
         Datastore datastore = getCoreDatastore();
-        final Query<School> query = datastore.createQuery(School.class);
-        final School school = query.field("id").equal(new ObjectId(id)).get();
+        School school = datastore.get(School.class, new ObjectId(id));
         return school;      
     }
     

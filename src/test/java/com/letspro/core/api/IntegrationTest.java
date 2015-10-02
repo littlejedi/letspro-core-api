@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 import io.dropwizard.testing.ResourceHelpers;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 
+import java.util.ArrayList;
 import java.util.UUID;
 
 import javax.ws.rs.client.Client;
@@ -21,6 +22,8 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import com.letspro.commons.domain.mongodb.Experiment;
+import com.letspro.commons.domain.mongodb.Project;
 import com.letspro.commons.domain.mongodb.School;
 
 public class IntegrationTest {
@@ -51,6 +54,9 @@ public class IntegrationTest {
         client.close();
     }
     
+    /***
+     * School resource
+     */
     @Test
     public void testPostSchool() throws Exception {
         UUID uuid = UUID.randomUUID();
@@ -87,25 +93,27 @@ public class IntegrationTest {
         assertEquals(newSchool.getName(), newName);
     }
 
-    /*@Test
-    public void testHelloWorld() throws Exception {
-        final Optional<String> name = Optional.fromNullable("Dr. IntegrationTest");
-        final Saying saying = client.target("http://localhost:" + RULE.getLocalPort() + "/hello-world")
-                .queryParam("name", name.get())
-                .request()
-                .get(Saying.class);
-        assertThat(saying.getContent()).isEqualTo(RULE.getConfiguration().buildTemplate().render(name));
-    }
-
+    /**
+     * Project resource
+     */
     @Test
-    public void testPostPerson() throws Exception {
-        final Person person = new Person("Dr. IntegrationTest", "Chief Wizard");
-        final Person newPerson = client.target("http://localhost:" + RULE.getLocalPort() + "/people")
+    public void postProject() throws Exception {
+        // Get test school object
+        final School school = client.target(API_ADDRESS + "/schools/"  + TEST_SCHOOL_ID)
                 .request()
-                .post(Entity.entity(person, MediaType.APPLICATION_JSON_TYPE))
-                .readEntity(Person.class);
-        assertThat(newPerson.getId()).isNotNull();
-        assertThat(newPerson.getFullName()).isEqualTo(person.getFullName());
-        assertThat(newPerson.getJobTitle()).isEqualTo(person.getJobTitle());
-    }*/
+                .get(School.class);
+        // Insert project
+        UUID uuid = UUID.randomUUID();
+        Project project = new Project("integrationtest-" + uuid.toString());
+        project.setExperiments(new ArrayList<Experiment>());
+        project.setSchool(school);
+        project.getExperiments().add(new Experiment("experiment"));
+        project.getExperiments().add(new Experiment("experiment2"));
+        final Project newProject = client.target(API_ADDRESS + "/projects")
+                .request()
+                .post(Entity.entity(project, MediaType.APPLICATION_JSON_TYPE))
+                .readEntity(Project.class);
+        assertNotNull(newProject.getId());
+        assertEquals(newProject.getName(), newProject.getName());
+    }
 }
