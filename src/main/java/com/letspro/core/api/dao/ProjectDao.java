@@ -12,13 +12,6 @@ public class ProjectDao extends EntityDao {
     public Project insertProject(Project project) {
         Datastore datastore = getCoreDatastore();
         project.setCreated(DateUtils.nowUtcDate());
-        if (project.getExperiments() != null) {
-            for (Experiment e : project.getExperiments()) {
-                // Manually create IDs since MongoDB only assigns IDs for top level document
-                e.setId(new ObjectId());
-                e.setCreated(DateUtils.nowUtcDate());
-            }
-        }
         datastore.save(project);
         return project;
     }

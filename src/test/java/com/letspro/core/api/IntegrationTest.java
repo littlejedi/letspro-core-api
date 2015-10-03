@@ -98,10 +98,9 @@ public class IntegrationTest {
      */
     @Test
     public void postProject() throws Exception {
-        // Get test school object
-        final School school = client.target(API_ADDRESS + "/schools/"  + TEST_SCHOOL_ID)
-                .request()
-                .get(School.class);
+        // Construct test school object
+        School school = new School();
+        school.setId(new ObjectId(TEST_SCHOOL_ID));
         // Insert project
         UUID uuid = UUID.randomUUID();
         Project project = new Project("integrationtest-" + uuid.toString());
