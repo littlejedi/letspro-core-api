@@ -92,27 +92,72 @@ public class IntegrationTest {
         assertEquals(newSchool.getId(), new ObjectId(TEST_SCHOOL_ID));
         assertEquals(newSchool.getName(), newName);
     }
+    
+    /**
+     * Experiment resource
+     */
+    @Test
+    public void postExperimentAndAddToProject() throws Exception {
+        final Project project = createNewProject(getRandomUuidString());
+        final String name = getRandomUuidString();
+        final Experiment newExperiment = createNewExperiment(name, project);
+        assertNotNull(newExperiment.getId());
+        assertEquals(newExperiment.getName(), name);
+        // Update project
+        project.setExperiments(new ArrayList<Experiment>());
+        project.getExperiments().add(newExperiment);
+        final Project newProject = client.target(API_ADDRESS + "/projects")
+                .request()
+                .put(Entity.entity(project, MediaType.APPLICATION_JSON_TYPE))
+                .readEntity(Project.class);
+        assertNotNull(newProject.getExperiments());
+        assertTrue(newProject.getExperiments().size() == 1);
+        // Delete test entity
+        Response response = client.target(API_ADDRESS + "/experiments" + "/" + newExperiment.getId().toString())
+        .request()
+        .delete();
+        assertEquals(Response.Status.NO_CONTENT.getStatusCode(), response.getStatus());
+    }
 
     /**
      * Project resource
      */
     @Test
     public void postProject() throws Exception {
+        final String name = getRandomUuidString();
+        final Project newProject = createNewProject(name);
+        assertNotNull(newProject.getId());
+        assertEquals(newProject.getName(), name);
+    }
+    
+    private Project createNewProject(String name) throws Exception {
         // Construct test school object
         School school = new School();
         school.setId(new ObjectId(TEST_SCHOOL_ID));
         // Insert project
-        UUID uuid = UUID.randomUUID();
-        Project project = new Project("integrationtest-" + uuid.toString());
+        Project project = new Project(name);
         project.setExperiments(new ArrayList<Experiment>());
         project.setSchool(school);
-        project.getExperiments().add(new Experiment("experiment"));
-        project.getExperiments().add(new Experiment("experiment2"));
         final Project newProject = client.target(API_ADDRESS + "/projects")
                 .request()
                 .post(Entity.entity(project, MediaType.APPLICATION_JSON_TYPE))
                 .readEntity(Project.class);
-        assertNotNull(newProject.getId());
-        assertEquals(newProject.getName(), newProject.getName());
+        return newProject;
+    }
+    
+    private Experiment createNewExperiment(String name, Project project) throws Exception {
+        final Experiment experiment = new Experiment(name);
+        experiment.setProject(project);
+        final Experiment newExperiment = client.target(API_ADDRESS + "/experiments")
+                .request()
+                .post(Entity.entity(experiment, MediaType.APPLICATION_JSON_TYPE))
+                .readEntity(Experiment.class);
+        return newExperiment;
+    }
+    
+    private String getRandomUuidString() {
+        UUID uuid = UUID.randomUUID();
+        String uuidString = uuid.toString();
+        return "integrationtest-" + uuidString;
     }
 }

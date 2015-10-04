@@ -14,6 +14,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status;
 
 import org.assertj.core.util.Strings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.annotation.Timed;
 import com.letspro.commons.domain.mongodb.Project;
@@ -23,6 +25,8 @@ import com.letspro.core.api.dao.ProjectDao;
 @Path("/projects")
 @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
 public class ProjectResource {
+    
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProjectResource.class);
     
     private ProjectDao projectDao;
     
@@ -38,6 +42,7 @@ public class ProjectResource {
         try {
             return projectDao.getProject(id);
         } catch (Exception e) {
+            LOGGER.error("Error getting project, id = " + id, e);
             throw new WebApplicationException(e);
         }
     }
@@ -51,6 +56,7 @@ public class ProjectResource {
         try {
             return projectDao.insertProject(project);
         } catch (Exception e) {
+            LOGGER.error("Error inserting project, project = " + project.toString(), e);
             throw new WebApplicationException(e);
         }
     }
@@ -64,6 +70,7 @@ public class ProjectResource {
         try {
             return projectDao.updateProject(project);
         } catch (Exception e) {
+            LOGGER.error("Error updating project, project = " + project.toString(), e);
             throw new WebApplicationException(e);
         }
     }
@@ -75,8 +82,8 @@ public class ProjectResource {
         try {
             projectDao.deleteProject(id);
         } catch (Exception e) {
+            LOGGER.error("Error deleting project by id, id = " + id, e);
             throw new WebApplicationException(e);
         }
     }
-
 }

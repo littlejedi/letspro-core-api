@@ -16,6 +16,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status;
 
 import org.assertj.core.util.Strings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.annotation.Timed;
 import com.letspro.commons.domain.mongodb.School;
@@ -25,6 +27,8 @@ import com.letspro.core.api.dao.SchoolsDao;
 @Path("/schools")
 @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
 public class SchoolsResource {
+    
+    private static final Logger LOGGER = LoggerFactory.getLogger(SchoolsResource.class);
     
     private SchoolsDao schoolsDao;
     
@@ -40,6 +44,7 @@ public class SchoolsResource {
         try {
             return schoolsDao.getSchool(id);
         } catch (Exception e) {
+            LOGGER.error("Error getting school, id = " + id, e);
             throw new WebApplicationException(e);
         }
     }
@@ -50,6 +55,7 @@ public class SchoolsResource {
         try {
             return schoolsDao.getSchools();
         } catch (Exception e) {
+            LOGGER.error("Error getting schools", e);
             throw new WebApplicationException(e);
         }      
     }
@@ -63,6 +69,7 @@ public class SchoolsResource {
         try {
             return schoolsDao.insertSchool(school);
         } catch (Exception e) {
+            LOGGER.error("Error inserting school, school = " + school.toString(), e);
             throw new WebApplicationException(e);
         }
     }
@@ -76,6 +83,7 @@ public class SchoolsResource {
         try {
             return schoolsDao.updateSchool(school);
         } catch (Exception e) {
+            LOGGER.error("Error updating school", e);
             throw new WebApplicationException(e);
         }
     }
@@ -87,6 +95,7 @@ public class SchoolsResource {
         try {
             schoolsDao.deleteSchool(id);
         } catch (Exception e) {
+            LOGGER.error("Error deleting school", e);
             throw new WebApplicationException(e);
         }
     }
