@@ -22,9 +22,12 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import com.letspro.commons.domain.SensorDataRecord;
+import com.letspro.commons.domain.SensorDataRecordList;
 import com.letspro.commons.domain.mongodb.Experiment;
 import com.letspro.commons.domain.mongodb.Project;
 import com.letspro.commons.domain.mongodb.School;
+import com.letspro.commons.utils.DateUtils;
 
 public class IntegrationTest {
 
@@ -133,9 +136,32 @@ public class IntegrationTest {
     /**
      * Sensor data resource
      */
-    @Test
+    @Test()
     public void postSensorDataRecords() throws Exception {
+        SensorDataRecordList payload = new SensorDataRecordList();
+        payload.setRecords(new ArrayList<SensorDataRecord>());
+        Long timestamp = DateUtils.nowUtc().getMillis();
         
+        SensorDataRecord r = new SensorDataRecord();
+        r.setTimestampInMs(timestamp);
+        r.setDataType(1);
+        r.setValue("testvalue");
+        r.setSensorId("testsensor");
+        r.setExperimentId("56105b0af2763b25806d1365");
+        payload.getRecords().add(r);
+        
+        SensorDataRecord r2 = new SensorDataRecord();
+        r2.setTimestampInMs(timestamp);
+        r2.setDataType(1);
+        r2.setValue("testvalue2");
+        r2.setSensorId("testsensor2");
+        r2.setExperimentId("56105b0af2763b25806d1365");
+        payload.getRecords().add(r2);
+        
+        final Response response = client.target(API_ADDRESS + "/sensordatadocs")
+                .request()
+                .post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE));
+        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
     }
     
     /**
