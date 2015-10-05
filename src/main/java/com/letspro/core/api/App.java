@@ -15,6 +15,7 @@ import com.letspro.core.api.auth.SimplePrincipal;
 import com.letspro.core.api.dao.ExperimentDao;
 import com.letspro.core.api.dao.ProjectDao;
 import com.letspro.core.api.dao.SchoolsDao;
+import com.letspro.core.api.dao.SensorDataDocumentDao;
 import com.letspro.core.api.db.MongoDatastore;
 import com.letspro.core.api.filter.DateRequiredFeature;
 import com.letspro.core.api.health.MongoDatabaseHealthCheck;
@@ -23,6 +24,7 @@ import com.letspro.core.api.resources.FilteredResource;
 import com.letspro.core.api.resources.ProjectResource;
 import com.letspro.core.api.resources.ProtectedResource;
 import com.letspro.core.api.resources.SchoolsResource;
+import com.letspro.core.api.resources.SensorDataResource;
 
 public class App extends Application<AppConfiguration> {
     public static void main(String[] args) throws Exception {
@@ -54,6 +56,7 @@ public class App extends Application<AppConfiguration> {
         SchoolsDao schoolsDao = new SchoolsDao();
         ProjectDao projectDao = new ProjectDao();
         ExperimentDao experimentDao = new ExperimentDao();
+        SensorDataDocumentDao sensorDataDocumentDao = new SensorDataDocumentDao();
         
         // Health checks
         environment.healthChecks().register("database", new MongoDatabaseHealthCheck());
@@ -76,5 +79,6 @@ public class App extends Application<AppConfiguration> {
         environment.jersey().register(new SchoolsResource(schoolsDao));
         environment.jersey().register(new ProjectResource(projectDao));
         environment.jersey().register(new ExperimentResource(experimentDao));
+        environment.jersey().register(new SensorDataResource(sensorDataDocumentDao));
     }
 }

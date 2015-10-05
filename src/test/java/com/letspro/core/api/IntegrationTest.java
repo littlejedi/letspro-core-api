@@ -130,6 +130,17 @@ public class IntegrationTest {
         assertEquals(newProject.getName(), name);
     }
     
+    /**
+     * Sensor data resource
+     */
+    @Test
+    public void postSensorDataRecords() throws Exception {
+        
+    }
+    
+    /**
+     * Helpers
+     */
     private Project createNewProject(String name) throws Exception {
         // Construct test school object
         School school = new School();
