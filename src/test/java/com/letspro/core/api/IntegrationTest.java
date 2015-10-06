@@ -158,7 +158,17 @@ public class IntegrationTest {
         r2.setExperimentId("56105b0af2763b25806d1365");
         payload.getRecords().add(r2);
         
-        final Response response = client.target(API_ADDRESS + "/sensordatadocs")
+        Response response = client.target(API_ADDRESS + "/sensordatadocs")
+                .request()
+                .post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE));
+        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+        
+        // Do another POST to test update
+        r.setSensorId("testsensor3");
+        r.setValue("testvalue3");
+        r2.setSensorId("testsensor4");
+        r2.setValue("testvalue4");
+        response = client.target(API_ADDRESS + "/sensordatadocs")
                 .request()
                 .post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE));
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());

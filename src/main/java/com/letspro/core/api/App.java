@@ -19,6 +19,7 @@ import com.letspro.core.api.dao.SensorDataDocumentDao;
 import com.letspro.core.api.db.MongoDatastore;
 import com.letspro.core.api.filter.DateRequiredFeature;
 import com.letspro.core.api.health.MongoDatabaseHealthCheck;
+import com.letspro.core.api.monitoring.TimedApplicationListener;
 import com.letspro.core.api.resources.ExperimentResource;
 import com.letspro.core.api.resources.FilteredResource;
 import com.letspro.core.api.resources.ProjectResource;
@@ -66,6 +67,7 @@ public class App extends Application<AppConfiguration> {
                 com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         
         // Jersey
+        environment.jersey().register(new TimedApplicationListener());
         environment.jersey().register(DateRequiredFeature.class);
         environment.jersey().register(new AuthDynamicFeature(new BasicCredentialAuthFilter.Builder<SimplePrincipal>()
                 .setAuthenticator(new SimpleAuthenticator())

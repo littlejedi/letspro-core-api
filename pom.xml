@@ -6,9 +6,9 @@
     </prerequisites>
 
     <artifactId>dropwizard-example</artifactId>
-    <version>0.9.0-rc5-SNAPSHOT</version>
+    <version>0.9.0-rc4</version>
     <groupId>io.dropwizard</groupId>
-    <name>Dropwizard Example Application</name>
+    <name>STEM Platform Core API</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
