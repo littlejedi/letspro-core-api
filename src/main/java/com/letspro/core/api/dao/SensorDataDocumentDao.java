@@ -1,9 +1,13 @@
 package com.letspro.core.api.dao;
 
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
 
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
+import org.mongodb.morphia.aggregation.Projection;
 import org.mongodb.morphia.query.Query;
 import org.mongodb.morphia.query.UpdateOperations;
 import org.slf4j.Logger;
@@ -13,6 +17,7 @@ import com.letspro.commons.domain.SensorDataRecord;
 import com.letspro.commons.domain.SensorDataRecordList;
 import com.letspro.commons.domain.mongodb.DbSensorDataDocument;
 import com.letspro.commons.domain.mongodb.DbSensorDataRecord;
+import com.letspro.commons.domain.mongodb.Experiment;
 import com.letspro.commons.utils.DateUtils;
 import com.letspro.commons.utils.SensorDataUtils;
 
@@ -27,6 +32,33 @@ public class SensorDataDocumentDao extends EntityDao {
         for (SensorDataRecord r : records.getRecords()) {
             insertSensorDataRecord(r);
         }
+    }
+    
+    public List<SensorDataRecord> findSensorDataDocuments(String experimentId, String sensorId, Long start, Long end) {
+        Datastore datastore = getCoreDatastore();
+        List<SensorDataRecord> result = new ArrayList<SensorDataRecord>();
+        Query<DbSensorDataDocument> query = datastore
+                .createQuery(DbSensorDataDocument.class).disableValidation();
+        if (sensorId != null) {
+            query.field("records.sensorId").equal(sensorId);
+        }
+        if (experimentId != null) {
+            query.field("records.experiment.$id").equal(new ObjectId(experimentId));
+        }
+        if (start != null) {
+            query.field("_id").greaterThanOrEq(start);
+        }
+        if (end != null) {
+            query.field("_id").lessThanOrEq(end);
+        }
+        Iterator<DbSensorDataDocument> iter = datastore.createAggregation(DbSensorDataDocument.class)
+        .unwind("records").match(query).aggregate(DbSensorDataDocument.class);
+        while (iter.hasNext()) {
+            DbSensorDataDocument doc = iter.next();
+            final SensorDataRecord record = SensorDataUtils.flattenSensorDataDocument(doc);  
+            result.add(record);
+        }
+        return result;
     }
     
     public DbSensorDataDocument insertSensorDataDocument(DbSensorDataDocument document) {
