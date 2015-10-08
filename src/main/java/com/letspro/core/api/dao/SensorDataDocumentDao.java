@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
+import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.aggregation.Projection;
@@ -20,6 +21,13 @@ import com.letspro.commons.domain.mongodb.DbSensorDataRecord;
 import com.letspro.commons.domain.mongodb.Experiment;
 import com.letspro.commons.utils.DateUtils;
 import com.letspro.commons.utils.SensorDataUtils;
+import com.mongodb.AggregationOutput;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
+import com.mongodb.MongoClient;
+import com.mongodb.client.AggregateIterable;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
 
 public class SensorDataDocumentDao extends EntityDao {
     
@@ -37,7 +45,7 @@ public class SensorDataDocumentDao extends EntityDao {
     public List<SensorDataRecord> findSensorDataDocuments(String experimentId, String sensorId, Long start, Long end) {
         Datastore datastore = getCoreDatastore();
         List<SensorDataRecord> result = new ArrayList<SensorDataRecord>();
-        Query<DbSensorDataDocument> query = datastore
+        /*Query<DbSensorDataDocument> query = datastore
                 .createQuery(DbSensorDataDocument.class).disableValidation();
         if (sensorId != null) {
             query.field("records.sensorId").equal(sensorId);
@@ -52,10 +60,22 @@ public class SensorDataDocumentDao extends EntityDao {
             query.field("_id").lessThanOrEq(end);
         }
         Iterator<DbSensorDataDocument> iter = datastore.createAggregation(DbSensorDataDocument.class)
-        .unwind("records").match(query).aggregate(DbSensorDataDocument.class);
+                .unwind("records").match(query).aggregate(DbSensorDataDocument.class);
         while (iter.hasNext()) {
             DbSensorDataDocument doc = iter.next();
             final SensorDataRecord record = SensorDataUtils.flattenSensorDataDocument(doc);  
+            result.add(record);
+        }*/
+        MongoClient client = datastore.getMongo();
+        MongoCollection collection = client.getDatabase("core").getCollection("sensordatadocs");
+        List<DBObject> unwindItems = new ArrayList<>();
+        DBObject unwind = new BasicDBObject("$unwind", "$records");
+        unwindItems.add(unwind);
+        AggregateIterable<Document> output = collection.aggregate(unwindItems);
+        MongoCursor<Document> doc = output.iterator();
+        while (doc.hasNext()) {
+            Document d = doc.next();
+            final SensorDataRecord record = SensorDataUtils.flattenBsonSensorDataDocument(d);  
             result.add(record);
         }
         return result;
