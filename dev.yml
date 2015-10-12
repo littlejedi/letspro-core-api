@@ -4,6 +4,10 @@ mongo:
   port: 27017
   db: core
 
+elastic:
+  host: localhost
+  port: 9300
+
 # use the simple server factory if you only want to run on a single port
 #server:
 #  type: simple

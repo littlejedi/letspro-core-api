@@ -17,6 +17,7 @@ import com.letspro.core.api.dao.ProjectDao;
 import com.letspro.core.api.dao.SchoolsDao;
 import com.letspro.core.api.dao.SensorDataDocumentDao;
 import com.letspro.core.api.db.MongoDatastore;
+import com.letspro.core.api.elastic.ElasticSearchClient;
 import com.letspro.core.api.filter.DateRequiredFeature;
 import com.letspro.core.api.health.MongoDatabaseHealthCheck;
 import com.letspro.core.api.monitoring.TimedApplicationListener;
@@ -53,11 +54,14 @@ public class App extends Application<AppConfiguration> {
         // Initialize db
         MongoDatastore.getInstance().initialize(configuration.getMongoConfiguration());
         
+        // Initialize Elastic search client
+        ElasticSearchClient client = new ElasticSearchClient(configuration.getElasticSearchConfiguration());
+        
         // Initialize DAOs
         SchoolsDao schoolsDao = new SchoolsDao();
         ProjectDao projectDao = new ProjectDao();
         ExperimentDao experimentDao = new ExperimentDao();
-        SensorDataDocumentDao sensorDataDocumentDao = new SensorDataDocumentDao();
+        SensorDataDocumentDao sensorDataDocumentDao = new SensorDataDocumentDao(configuration, client);
         
         // Health checks
         environment.healthChecks().register("database", new MongoDatabaseHealthCheck());
