@@ -105,8 +105,8 @@ public class ElasticSearchClient {
         List<SensorDataRecord> result = new ArrayList<SensorDataRecord>();
         SearchResponse response = null;
         int i = 0;
-        FilterBuilder sensorIdFilter = sensorId != null ? FilterBuilders.termFilter("sensorId", sensorId) : null;
-        FilterBuilder experimentIdFilter = experimentId != null ? FilterBuilders.termFilter("experimentId", experimentId) : null;
+        FilterBuilder sensorIdFilter = sensorId != null ? FilterBuilders.termFilter("sensorId", sensorId) : FilterBuilders.matchAllFilter();
+        FilterBuilder experimentIdFilter = experimentId != null ? FilterBuilders.termFilter("experimentId", experimentId) : FilterBuilders.matchAllFilter();
         while (response == null || response.getHits().hits().length != 0) {
             response = client.prepareSearch("stem")
                     .setTypes("sensordata")
