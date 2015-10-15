@@ -14,7 +14,7 @@ public class AppConfiguration extends Configuration {
     @JsonProperty("elastic")
     private ElasticSearchConfiguration elasticSearchConfiguration;
     
-    private boolean useElasticForAnalytics = false;
+    private boolean useElasticForAnalytics = true;
     
     public AppConfiguration() {
     }
