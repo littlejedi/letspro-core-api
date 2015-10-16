@@ -14,6 +14,8 @@ public class AppConfiguration extends Configuration {
     @JsonProperty("elastic")
     private ElasticSearchConfiguration elasticSearchConfiguration;
     
+    private String defaultDirectory = "/letspro/fileuploads";
+    
     private boolean useElasticForAnalytics = true;
     
     public AppConfiguration() {
@@ -42,5 +44,13 @@ public class AppConfiguration extends Configuration {
 
     public void setUseElasticForAnalytics(boolean useElasticForAnalytics) {
         this.useElasticForAnalytics = useElasticForAnalytics;
+    }
+
+    public String getDefaultDirectory() {
+        return defaultDirectory;
+    }
+
+    public void setDefaultDirectory(String defaultDirectory) {
+        this.defaultDirectory = defaultDirectory;
     }
 }

@@ -8,11 +8,14 @@ import io.dropwizard.configuration.SubstitutingSourceProvider;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 
+import org.glassfish.jersey.media.multipart.MultiPartFeature;
+import org.glassfish.jersey.message.internal.StreamingOutputProvider;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 
 import com.letspro.core.api.auth.SimpleAuthenticator;
 import com.letspro.core.api.auth.SimplePrincipal;
 import com.letspro.core.api.dao.ExperimentDao;
+import com.letspro.core.api.dao.FileUploadSessionDao;
 import com.letspro.core.api.dao.ProjectDao;
 import com.letspro.core.api.dao.SchoolsDao;
 import com.letspro.core.api.dao.SensorDataDocumentDao;
@@ -22,6 +25,7 @@ import com.letspro.core.api.filter.DateRequiredFeature;
 import com.letspro.core.api.health.MongoDatabaseHealthCheck;
 import com.letspro.core.api.monitoring.TimedApplicationListener;
 import com.letspro.core.api.resources.ExperimentResource;
+import com.letspro.core.api.resources.FileUploadResource;
 import com.letspro.core.api.resources.FilteredResource;
 import com.letspro.core.api.resources.ProjectResource;
 import com.letspro.core.api.resources.ProtectedResource;
@@ -62,6 +66,7 @@ public class App extends Application<AppConfiguration> {
         ProjectDao projectDao = new ProjectDao();
         ExperimentDao experimentDao = new ExperimentDao();
         SensorDataDocumentDao sensorDataDocumentDao = new SensorDataDocumentDao(configuration, client);
+        FileUploadSessionDao fileUploadSessionDao = new FileUploadSessionDao();
         
         // Health checks
         environment.healthChecks().register("database", new MongoDatabaseHealthCheck());
@@ -78,6 +83,9 @@ public class App extends Application<AppConfiguration> {
                 //.setAuthorizer(new SimpleAuthorizer())
                 .setRealm("SUPER SECRET STUFF")
                 .buildAuthFilter()));
+        // For multipart upload
+        environment.jersey().register(MultiPartFeature.class);
+        environment.jersey().register(StreamingOutputProvider.class); // for multi-part upoad
         environment.jersey().register(new AuthValueFactoryProvider.Binder<>(SimplePrincipal.class));
         environment.jersey().register(RolesAllowedDynamicFeature.class);
         environment.jersey().register(new ProtectedResource());
@@ -86,5 +94,6 @@ public class App extends Application<AppConfiguration> {
         environment.jersey().register(new ProjectResource(projectDao));
         environment.jersey().register(new ExperimentResource(experimentDao));
         environment.jersey().register(new SensorDataResource(sensorDataDocumentDao));
+        environment.jersey().register(new FileUploadResource(fileUploadSessionDao, configuration));
     }
 }
