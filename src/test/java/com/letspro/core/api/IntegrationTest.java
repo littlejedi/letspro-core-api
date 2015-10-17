@@ -21,6 +21,7 @@ import javax.ws.rs.core.Response;
 import org.bson.types.ObjectId;
 import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
+import org.glassfish.jersey.media.multipart.internal.MultiPartWriter;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -57,6 +58,7 @@ public class IntegrationTest {
     public void setUp() throws Exception {
         HttpAuthenticationFeature feature = HttpAuthenticationFeature.basic("user", PASS);
         client = ClientBuilder.newClient();
+        client.register(MultiPartWriter.class);
         client.register(feature);
     }
 
