@@ -6,6 +6,9 @@ import static org.junit.Assert.assertTrue;
 import io.dropwizard.testing.ResourceHelpers;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 
+import java.io.ByteArrayInputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.UUID;
 
@@ -17,14 +20,19 @@ import javax.ws.rs.core.Response;
 
 import org.bson.types.ObjectId;
 import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
+import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import com.letspro.commons.domain.FileUploadRequest;
+import com.letspro.commons.domain.FileUploadStatus;
+import com.letspro.commons.domain.FileUploadStatusResponse;
 import com.letspro.commons.domain.SensorDataRecord;
 import com.letspro.commons.domain.SensorDataRecordList;
 import com.letspro.commons.domain.mongodb.Experiment;
+import com.letspro.commons.domain.mongodb.FileUploadSession;
 import com.letspro.commons.domain.mongodb.Project;
 import com.letspro.commons.domain.mongodb.School;
 import com.letspro.commons.utils.DateUtils;
@@ -172,6 +180,38 @@ public class IntegrationTest {
                 .request()
                 .post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE));
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+    }
+    
+    /**
+     * File upload resources
+     * @throws Exception
+     */
+    @Test()
+    public void testUploadFileHappyPath() throws Exception {
+        FileUploadSession session = new FileUploadSession();
+        session.setFileType(0);
+        
+        // Create a session first
+        final FileUploadSession newSession = client.target(API_ADDRESS + "/fileuploads")
+                .request()
+                .post(Entity.entity(session, MediaType.APPLICATION_JSON_TYPE))
+                .readEntity(FileUploadSession.class);
+        assertNotNull(newSession.getId());
+        assertNotNull(newSession.getUuid());
+        
+        // Upload file
+        FormDataMultiPart multiPart = new FormDataMultiPart();
+        FileUploadRequest request = new FileUploadRequest();
+        request.setFileType(0);
+        request.setOffset(0);
+        byte[] bytes = Files.readAllBytes(Paths.get("/test.mp3"));
+        multiPart.field("metadata", request, MediaType.APPLICATION_JSON_TYPE);
+        multiPart.field("file", new ByteArrayInputStream(bytes), MediaType.APPLICATION_OCTET_STREAM_TYPE);
+        FileUploadStatusResponse response = client.target(API_ADDRESS + "/fileuploads/" + newSession.getUuid())
+                .request()
+                .post(Entity.entity(multiPart, MediaType.MULTIPART_FORM_DATA))
+                .readEntity(FileUploadStatusResponse.class);
+        assertEquals(FileUploadStatus.FINISHED.getValue(), response.getStatus());
     }
     
     /**

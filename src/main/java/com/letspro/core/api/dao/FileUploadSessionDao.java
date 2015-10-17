@@ -1,7 +1,5 @@
 package com.letspro.core.api.dao;
 
-import java.util.UUID;
-
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.query.Query;
@@ -13,7 +11,6 @@ public class FileUploadSessionDao extends EntityDao {
     
     public FileUploadSession insertFileUploadSession(FileUploadSession session) {
         Datastore datastore = getCoreDatastore();
-        session.setUuid(UUID.randomUUID().toString());
         session.setCreated(DateUtils.nowUtcDate());
         datastore.save(session);
         return session;

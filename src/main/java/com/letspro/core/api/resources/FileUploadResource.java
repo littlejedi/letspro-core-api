@@ -8,6 +8,7 @@ import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.UUID;
 
 import io.dropwizard.auth.Auth;
 
@@ -34,6 +35,7 @@ import com.letspro.commons.domain.FileUploadRequest;
 import com.letspro.commons.domain.FileUploadStatus;
 import com.letspro.commons.domain.FileUploadStatusResponse;
 import com.letspro.commons.domain.mongodb.FileUploadSession;
+import com.letspro.commons.domain.mongodb.Project;
 import com.letspro.core.api.AppConfiguration;
 import com.letspro.core.api.auth.SimplePrincipal;
 import com.letspro.core.api.dao.FileUploadSessionDao;
@@ -76,6 +78,23 @@ public class FileUploadResource {
             return fileUploadSessionDao.getFileUploadSession(uuid, true);
         } catch (Exception e) {
             LOGGER.error("Error getting fileUploadSession status, uuid = " + uuid, e);
+            throw new WebApplicationException(e);
+        }
+    }
+    
+    @Timed
+    @POST
+    public FileUploadSession insertFileUploadSession(@Auth SimplePrincipal principal, FileUploadSession session) {
+        if (session.getFileType() == null) {
+            throw new WebApplicationException(Status.BAD_REQUEST);
+        }
+        try {
+            UUID uuid = UUID.randomUUID();
+            session.setUuid(uuid.toString());
+            session.setPath(appConfiguration.getDefaultDirectory() + "/" + uuid.toString());
+            return fileUploadSessionDao.insertFileUploadSession(session);
+        } catch (Exception e) {
+            LOGGER.error("Error inserting fileUploadSession, file upload session = " + session.toString(), e);
             throw new WebApplicationException(e);
         }
     }
