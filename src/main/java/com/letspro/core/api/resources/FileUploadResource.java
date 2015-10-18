@@ -1,16 +1,13 @@
 package com.letspro.core.api.resources;
 
+import io.dropwizard.auth.Auth;
+
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.UUID;
-
-import io.dropwizard.auth.Auth;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -22,6 +19,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import org.assertj.core.util.Strings;
@@ -32,10 +30,8 @@ import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.annotation.Timed;
 import com.letspro.commons.domain.FileUploadRequest;
-import com.letspro.commons.domain.FileUploadStatus;
 import com.letspro.commons.domain.FileUploadStatusResponse;
 import com.letspro.commons.domain.mongodb.FileUploadSession;
-import com.letspro.commons.domain.mongodb.Project;
 import com.letspro.core.api.AppConfiguration;
 import com.letspro.core.api.auth.SimplePrincipal;
 import com.letspro.core.api.dao.FileUploadSessionDao;
@@ -72,29 +68,39 @@ public class FileUploadResource {
     @Timed
     @GET
     @Path("/{uuid}/status")
-    public FileUploadSession getFileUploadStatus(@Auth SimplePrincipal principal, @PathParam("uuid") String uuid) 
+    public FileUploadStatusResponse getFileUploadStatus(@Auth SimplePrincipal principal, @PathParam("uuid") String uuid) 
     {
         try {
-            return fileUploadSessionDao.getFileUploadSession(uuid, true);
+            FileUploadSession session = fileUploadSessionDao.getFileUploadSession(uuid, true);
+            String path = session.getPath();
+            if (Strings.isNullOrEmpty(path)) {
+                // Path is null or empty, this shouldn't happen, returning 0 bytes uploaded
+                return new FileUploadStatusResponse(0L, uuid);
+            }
+            File f = new File(session.getPath());
+            if (!f.exists()) {
+                return new FileUploadStatusResponse(0L, uuid);
+            }
+            long bytes = f.length();
+            return new FileUploadStatusResponse(bytes, uuid);
         } catch (Exception e) {
-            LOGGER.error("Error getting fileUploadSession status, uuid = " + uuid, e);
+            LOGGER.error("Error getting file upload status, uuid = " + uuid, e);
             throw new WebApplicationException(e);
         }
     }
     
     @Timed
     @POST
-    public FileUploadSession insertFileUploadSession(@Auth SimplePrincipal principal, FileUploadSession session) {
-        if (session.getFileType() == null) {
-            throw new WebApplicationException(Status.BAD_REQUEST);
-        }
+    public FileUploadSession insertFileUploadSession(@Auth SimplePrincipal principal, FileUploadRequest request) {
         try {
+            FileUploadSession session = new FileUploadSession();
             UUID uuid = UUID.randomUUID();
+            session.setFileType(request.getFileType());
             session.setUuid(uuid.toString());
             session.setPath(appConfiguration.getDefaultDirectory() + "/" + uuid.toString());
             return fileUploadSessionDao.insertFileUploadSession(session);
         } catch (Exception e) {
-            LOGGER.error("Error inserting fileUploadSession, file upload session = " + session.toString(), e);
+            LOGGER.error("Error inserting fileUploadSession, file upload request = " + request.toString(), e);
             throw new WebApplicationException(e);
         }
     }
@@ -103,24 +109,22 @@ public class FileUploadResource {
     @Path("/{uuid}")
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public FileUploadStatusResponse uploadFile(@PathParam("uuid") String uuid,
+    public Response uploadFile(@PathParam("uuid") String uuid,
             @FormDataParam("metadata") FileUploadRequest request,
-            @FormDataParam("file") InputStream file,
-            @FormDataParam("file") FormDataContentDisposition fileDisposition) {
+            @FormDataParam("file") InputStream file) {
         FileUtils.ensureParentDirectory(appConfiguration.getDefaultDirectory());
         FileUploadSession session = fileUploadSessionDao.getFileUploadSession(uuid, false);
         String path = session.getPath();
         if (Strings.isNullOrEmpty(path)) {
-            return new FileUploadStatusResponse(FileUploadStatus.INTERNAL_ERROR);
+            return Response.ok().build();
         }
         try {
-            File f = new File(path);
             long offset = request != null ? request.getOffset() : 0;
             writeToFile(file, path, offset);
-            return new FileUploadStatusResponse(FileUploadStatus.FINISHED);
+            return Response.ok().build();
         } catch (Exception e) {
             LOGGER.error("An error occured uploading file, uuid={}, request={}", uuid, request);
-            return new FileUploadStatusResponse(FileUploadStatus.INTERNAL_ERROR);
+            return Response.status(503).build();
         }
     }
     
@@ -150,6 +154,33 @@ public class FileUploadResource {
         }
     }
     
+    /**
+     * Purely for integration test
+     */
+    @Timed
+    @Path("/{uuid}/it")
+    @POST
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    public Response uploadFileIntegrationTest(@PathParam("uuid") String uuid,
+            @FormDataParam("metadata") FileUploadRequest request,
+            @FormDataParam("file") InputStream file) {
+        FileUtils.ensureParentDirectory(appConfiguration.getDefaultDirectory());
+        FileUploadSession session = fileUploadSessionDao.getFileUploadSession(uuid, false);
+        String path = session.getPath();
+        if (Strings.isNullOrEmpty(path)) {
+            return Response.ok().build();
+        }
+        try {
+            // Write 10 K to file
+            writeXKbsToFile(file, path, 10);
+            // Throw 503 no matter to indicate failure
+            return Response.status(503).build();
+        } catch (Exception e) {
+            LOGGER.error("An error occured uploading file, uuid={}, request={}", uuid, request);
+            return Response.status(503).build();
+        }
+    }
+    
     private void writeToFile(InputStream uploadedInputStream, String path, long offset) throws Exception {
         FileOutputStream out;
         int read = 0;
@@ -157,11 +188,32 @@ public class FileUploadResource {
 
         out = new FileOutputStream(new File(path));
         FileChannel ch = out.getChannel();
+        // Skip offset
         ch.position(offset);
+        
         while ((read = uploadedInputStream.read(bytes)) != -1) {
             ch.write(ByteBuffer.wrap(bytes, 0, read));
         }
         out.flush();
         out.close();
+   }
+   
+   // For test purposes, only write the first X * 1024 (at maximum) bytes.
+   private void writeXKbsToFile(InputStream uploadedInputStream, String path, int x) throws Exception {
+       FileOutputStream out;
+       int read = 0;
+       int i = 0;
+       byte[] bytes = new byte[1024];
+       out = new FileOutputStream(new File(path));
+       FileChannel ch = out.getChannel();
+       while ((read = uploadedInputStream.read(bytes)) != -1) {
+           ch.write(ByteBuffer.wrap(bytes, 0, read));
+           i++;
+           if (i == x) {
+               break;
+           }
+       }
+       out.flush();
+       out.close();     
    }
 }

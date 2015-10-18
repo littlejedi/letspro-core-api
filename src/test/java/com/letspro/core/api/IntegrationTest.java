@@ -7,6 +7,8 @@ import io.dropwizard.testing.ResourceHelpers;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -28,7 +30,6 @@ import org.junit.ClassRule;
 import org.junit.Test;
 
 import com.letspro.commons.domain.FileUploadRequest;
-import com.letspro.commons.domain.FileUploadStatus;
 import com.letspro.commons.domain.FileUploadStatusResponse;
 import com.letspro.commons.domain.SensorDataRecord;
 import com.letspro.commons.domain.SensorDataRecordList;
@@ -47,6 +48,8 @@ public class IntegrationTest {
     private static final String API_ADDRESS = "http://localhost:8080";
     
     private static final String TEST_SCHOOL_ID = "560da8d7f2763b21d8243d5b";
+    
+    private static final String TEST_FILE = "/root/letspro/test/test.mp3";
     
     @ClassRule
     public static final DropwizardAppRule<AppConfiguration> RULE = new DropwizardAppRule<>(
@@ -190,30 +193,92 @@ public class IntegrationTest {
      */
     @Test()
     public void testUploadFileHappyPath() throws Exception {
-        FileUploadSession session = new FileUploadSession();
-        session.setFileType(0);
+        FileUploadRequest request = new FileUploadRequest();
+        request.setFileType(0);
+        request.setOffset(0);
         
         // Create a session first
         final FileUploadSession newSession = client.target(API_ADDRESS + "/fileuploads")
                 .request()
-                .post(Entity.entity(session, MediaType.APPLICATION_JSON_TYPE))
+                .post(Entity.entity(request, MediaType.APPLICATION_JSON_TYPE))
                 .readEntity(FileUploadSession.class);
         assertNotNull(newSession.getId());
         assertNotNull(newSession.getUuid());
         
         // Upload file
         FormDataMultiPart multiPart = new FormDataMultiPart();
+        request.setFileType(0);
+        request.setOffset(0);
+        byte[] bytes = Files.readAllBytes(Paths.get(TEST_FILE));
+        multiPart.field("metadata", request, MediaType.APPLICATION_JSON_TYPE);
+        multiPart.field("file", new ByteArrayInputStream(bytes), MediaType.APPLICATION_OCTET_STREAM_TYPE);
+        Response response = client.target(API_ADDRESS + "/fileuploads/" + newSession.getUuid())
+                .request()
+                .post(Entity.entity(multiPart, MediaType.MULTIPART_FORM_DATA));
+        assertEquals(200, response.getStatus());
+        // Verify the files have same size
+        File f = new File(RULE.getConfiguration().getDefaultDirectory() + "/" + newSession.getUuid());
+        assertTrue(f.exists());
+        assertEquals(bytes.length, f.length());
+        // Verify the status shows the same
+        
+        FileUploadStatusResponse status = client.target(API_ADDRESS + "/fileuploads/" + newSession.getUuid() + "/status")
+                .request()
+                .get(FileUploadStatusResponse.class);
+        assertEquals(bytes.length, status.getBytesUploaded());
+    }
+    
+    @Test()
+    public void testUploadFile_ResumeUpload() throws Exception {
         FileUploadRequest request = new FileUploadRequest();
         request.setFileType(0);
         request.setOffset(0);
-        byte[] bytes = Files.readAllBytes(Paths.get("/test.mp3"));
-        multiPart.field("metadata", request, MediaType.APPLICATION_JSON_TYPE);
-        multiPart.field("file", new ByteArrayInputStream(bytes), MediaType.APPLICATION_OCTET_STREAM_TYPE);
-        FileUploadStatusResponse response = client.target(API_ADDRESS + "/fileuploads/" + newSession.getUuid())
+        
+        // Create a session first
+        final FileUploadSession newSession = client.target(API_ADDRESS + "/fileuploads")
                 .request()
-                .post(Entity.entity(multiPart, MediaType.MULTIPART_FORM_DATA))
-                .readEntity(FileUploadStatusResponse.class);
-        assertEquals(FileUploadStatus.FINISHED.getValue(), response.getStatus());
+                .post(Entity.entity(request, MediaType.APPLICATION_JSON_TYPE))
+                .readEntity(FileUploadSession.class);
+        assertNotNull(newSession.getId());
+        assertNotNull(newSession.getUuid());
+        
+        // Upload file to test endpoint first
+        FormDataMultiPart multiPart = new FormDataMultiPart();
+        request.setFileType(0);
+        request.setOffset(0);
+        byte[] bytes = Files.readAllBytes(Paths.get(TEST_FILE));
+        ByteArrayInputStream stream = new ByteArrayInputStream(bytes);
+        multiPart.field("metadata", request, MediaType.APPLICATION_JSON_TYPE);
+        multiPart.field("file", stream, MediaType.APPLICATION_OCTET_STREAM_TYPE);
+        Response response = client.target(API_ADDRESS + "/fileuploads/" + newSession.getUuid() + "/it")
+                .request()
+                .post(Entity.entity(multiPart, MediaType.MULTIPART_FORM_DATA));
+        assertEquals(503, response.getStatus());
+        // Get status
+        FileUploadStatusResponse status = client.target(API_ADDRESS + "/fileuploads/" + newSession.getUuid() + "/status")
+                .request()
+                .get(FileUploadStatusResponse.class);
+        long uploaded = status.getBytesUploaded();
+        request.setOffset(uploaded);
+        // Upload file to normal endpoint 
+        stream = new ByteArrayInputStream(this.readFile(TEST_FILE, uploaded));
+        FormDataMultiPart resumeMultiPart = new FormDataMultiPart();
+        resumeMultiPart.field("metadata", request, MediaType.APPLICATION_JSON_TYPE);
+        resumeMultiPart.field("file", stream, MediaType.APPLICATION_OCTET_STREAM_TYPE);
+        response = client.target(API_ADDRESS + "/fileuploads/" + newSession.getUuid())
+                .request()
+                .post(Entity.entity(resumeMultiPart, MediaType.MULTIPART_FORM_DATA));
+        assertEquals(200, response.getStatus());
+        // Verify the files have same size
+        File f = new File(RULE.getConfiguration().getDefaultDirectory() + "/" + newSession.getUuid());
+        assertTrue(f.exists());
+        assertEquals(bytes.length, f.length());
+        // Verify the status shows the same
+        
+        FileUploadStatusResponse sessionStatus = client.target(API_ADDRESS + "/fileuploads/" + newSession.getUuid() + "/status")
+                .request()
+                .get(FileUploadStatusResponse.class);
+        assertEquals(bytes.length, sessionStatus.getBytesUploaded());
     }
     
     /**
@@ -249,4 +314,21 @@ public class IntegrationTest {
         String uuidString = uuid.toString();
         return "integrationtest-" + uuidString;
     }
+    
+    private byte[] readFile(String path, long skip) throws Exception {
+        FileInputStream fileInputStream=null;
+        
+        File file = new File(path);
+        
+        byte[] bFile = new byte[(int) file.length() - (int)skip];
+        
+        //convert file into array of bytes
+        fileInputStream = new FileInputStream(file);
+        fileInputStream.skip(skip);
+        fileInputStream.read(bFile);
+        fileInputStream.close();
+        
+        return bFile;
+    }
+         
 }

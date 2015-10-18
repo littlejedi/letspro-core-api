@@ -55,6 +55,8 @@ public class App extends Application<AppConfiguration> {
 
     @Override
     public void run(AppConfiguration configuration, Environment environment) {
+        //setFiddlerProxy();
+
         // Initialize db
         MongoDatastore.getInstance().initialize(configuration.getMongoConfiguration());
         
@@ -95,5 +97,12 @@ public class App extends Application<AppConfiguration> {
         environment.jersey().register(new ExperimentResource(experimentDao));
         environment.jersey().register(new SensorDataResource(sensorDataDocumentDao));
         environment.jersey().register(new FileUploadResource(fileUploadSessionDao, configuration));
+    }
+    
+    private void setFiddlerProxy() {
+        System.setProperty("http.proxyHost", "127.0.0.1");
+        System.setProperty("https.proxyHost", "127.0.0.1");
+        System.setProperty("http.proxyPort", "8888");
+        System.setProperty("https.proxyPort", "8888");        
     }
 }

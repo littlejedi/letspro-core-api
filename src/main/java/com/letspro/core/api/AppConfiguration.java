@@ -16,6 +16,8 @@ public class AppConfiguration extends Configuration {
     
     private String defaultDirectory = "/letspro/fileuploads";
     
+    private String defaultTestDirectory = "/letspro/apiIntegrationTest/fileuploads";
+    
     private boolean useElasticForAnalytics = true;
     
     public AppConfiguration() {
@@ -52,5 +54,13 @@ public class AppConfiguration extends Configuration {
 
     public void setDefaultDirectory(String defaultDirectory) {
         this.defaultDirectory = defaultDirectory;
+    }
+
+    public String getDefaultTestDirectory() {
+        return defaultTestDirectory;
+    }
+
+    public void setDefaultTestDirectory(String defaultTestDirectory) {
+        this.defaultTestDirectory = defaultTestDirectory;
     }
 }
